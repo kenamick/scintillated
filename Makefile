@@ -1,9 +1,9 @@
 OUTPUT_DIR 	= bin
 APP_NAME 	= scintillated
+GO_ROOT 	= $(shell go env GOROOT)
 
 BULD_FLAGS	=
 LDLFAGS		= "-s -w"
-CGO_ENABLED	= 1
 
 # Detect OS and set binary name accordingly
 UNAME_S := $(shell uname -s)
@@ -19,13 +19,20 @@ all: clean build $(APP_NAME)
 $(APP_NAME):
 	-@test -d $(OUTPUT_DIR) || mkdir -p $(OUTPUT_DIR)/
 ifneq (Darwin linux,$(UNAME_S) $(TARGET))
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) go build $(BULD_FLAGS) -ldflags $(LDLFAGS) -o $(OUTPUT_DIR)/$(FULL_BIN_NAME) *.go
+	GOOS=darwin GOARCH=arm64 go build $(BULD_FLAGS) -ldflags $(LDLFAGS) -o $(OUTPUT_DIR)/$(FULL_BIN_NAME) .
 else
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) go build $(BULD_FLAGS) -ldflags $(LDLFAGS) -o $(OUTPUT_DIR)/$(FULL_BIN_NAME) *.go
+	GOOS=linux GOARCH=amd64 go build $(BULD_FLAGS) -ldflags $(LDLFAGS) -o $(OUTPUT_DIR)/$(FULL_BIN_NAME) .
 endif
 
 .PHONY: build
 build: $(APP_NAME)
+
+.PHONY: wasm
+wasm:
+	-@test -d $(OUTPUT_DIR) || mkdir -p $(OUTPUT_DIR)/
+	GOOS=js GOARCH=wasm go build -o $(OUTPUT_DIR)/$(APP_NAME).wasm .
+	cp $(GO_ROOT)/lib/wasm/wasm_exec.js $(OUTPUT_DIR)/
+	cp ws-index.html $(OUTPUT_DIR)/index.html
 
 .PHONY: run
 run:
